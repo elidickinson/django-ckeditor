@@ -1,6 +1,7 @@
 import os
-import re
 from urlparse import urlparse, urlunparse
+import sys
+import re
 from datetime import datetime
 
 from django.conf import settings
@@ -22,7 +23,20 @@ except ImportError:
         return fn
         
 THUMBNAIL_SIZE = (75, 75)
-    
+
+# Non-image file icons, matched from top to bottom
+fileicons_path = '%sfile-icons/' % settings.CKEDITOR_MEDIA_PREFIX
+CKEDITOR_FILEICONS = getattr(settings, 'CKEDITOR_FILEICONS', [
+    ('\.swf$', fileicons_path + 'swf.png'),
+    ('\.pdf$', fileicons_path + 'pdf.png'),
+    ('\.doc$|\.docx$|\.odt$', fileicons_path + 'doc.png'),
+    ('\.txt$', fileicons_path + 'txt.png'),
+    ('\.zip$|\.rar$|\.tar$|\.tar\..+$', fileicons_path + 'zip.png'),
+    ('\.ppt$', fileicons_path + 'ppt.png'),
+    ('\.xls$', fileicons_path + 'xls.png'),
+    ('.*', fileicons_path + 'file.png'), # Default
+])
+
 def get_available_name(name):
     """
     Returns a filename that's free on the target storage system, and
@@ -45,9 +59,17 @@ def get_thumb_filename(file_name):
     """
     return '%s_thumb%s' % os.path.splitext(file_name)
 
+def get_icon_filename(file_name):
+    """
+    Return the path to a file icon that matches the file name.
+    """
+    for regex, iconpath in CKEDITOR_FILEICONS:
+        if re.search(regex, file_name, re.I):
+            return iconpath
+
 def create_thumbnail(filename):
     image = Image.open(filename)
-        
+    
     # Convert to RGB if necessary
     # Thanks to Limodou on DjangoSnippets.org
     # http://www.djangosnippets.org/snippets/20/
@@ -76,6 +98,10 @@ def get_media_url(path):
     return url
 
 def get_upload_filename(upload_name, user):
+    
+    if isinstance(upload_name, unicode):
+        upload_name = upload_name.encode('utf-8')
+    
     # If CKEDITOR_RESTRICT_BY_USER is True upload file to user specific path.
     if getattr(settings, 'CKEDITOR_RESTRICT_BY_USER', False):
         user_path = user.username
@@ -116,15 +142,19 @@ def upload(request):
     for chunk in upload.chunks():
         out.write(chunk)
     out.close()
-
-    create_thumbnail(upload_filename)
+    
+    try:
+        create_thumbnail(upload_filename)
+    except IOError, OverflowError:
+        # Assume file not an image
+        pass
 
     # Respond with Javascript sending ckeditor upload url.
     url = get_media_url(upload_filename)
-    return HttpResponse("""
+    return HttpResponse(u"""
     <script type='text/javascript'>
         window.parent.CKEDITOR.tools.callFunction(%s, '%s');
-    </script>""" % (request.GET['CKEditorFuncNum'], url))
+    </script>""" % (request.GET['CKEditorFuncNum'], url.decode('utf-8')))
 
 def get_image_browse_urls(user=None):
     """
@@ -148,9 +178,24 @@ def get_image_browse_urls(user=None):
             if '_thumb' in filename:
                 continue
             
+            thumb_path = get_thumb_filename(filename)
+            if os.path.exists(thumb_path):
+                visible_filename = None
+                is_image = True
+                thumb_path = get_media_url(thumb_path)
+            else:
+                # File may not be an image
+                visible_filename = unicode(os.path.split(filename)[1], 'utf-8')
+                if len(visible_filename) > 20:
+                    visible_filename = visible_filename[0:19] + '...'
+                is_image = False
+                thumb_path = get_icon_filename(filename)
+            
             images.append({
-                'thumb': get_media_url(get_thumb_filename(filename)),
-                'src': get_media_url(filename)
+                'thumb': thumb_path,
+                'src': get_media_url(filename),
+                'visible_filename': visible_filename,
+                'is_image': is_image
             })
 
     return images
