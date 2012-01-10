@@ -1,6 +1,19 @@
-Django CKEditor
+Django CKEditor "too-many-cooks-in-the-kitchen"
 ================
-**Django admin CKEditor integration.**
+
+**Django admin CKEditor integration, with file upload support. CKEditor "too-many-cooks-in-the-kitchen" consolidates the the best of the best from the plethora of Django CKEDitor branches, 
+and aims to improve the code on the original that sadly seems no longer maintained.**
+
+Improvements
+------------
+
+* January 10 2012
+** Updated to CKEditor 3.6.2, released on 13 September 2011
+** CKEDitor distinct toolbar settings now working 
+** Improved file upload support for non image files
+** South <http://south.aeracode.org/> support
+** Upgraded to use ``STATIC_URL`` (django.contrib.staticfiles) instead of ``MEDIA_URL``
+
 
 Provides a ``RichTextField`` and ``CKEditorWidget`` utilizing CKEditor with image upload and browsing support included.
 
@@ -9,6 +22,8 @@ Provides a ``RichTextField`` and ``CKEditorWidget`` utilizing CKEditor with imag
 
 Installation
 ------------
+
+#. Setup ``django.contrib.staticfiles`` <https://docs.djangoproject.com/en/dev/howto/static-files/> for your project.
 
 #. Install or add django-ckeditor to your python path.
 
