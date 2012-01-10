@@ -8,11 +8,11 @@ Improvements
 ------------
 
 * January 10 2012
-** Updated to CKEditor 3.6.2, released on 13 September 2011
-** CKEDitor distinct toolbar settings now working 
-** Improved file upload support for non image files
-** South <http://south.aeracode.org/> support
-** Upgraded to use ``STATIC_URL`` (django.contrib.staticfiles) instead of ``MEDIA_URL``
+	* Updated to CKEditor 3.6.2, released on 13 September 2011
+	* CKEDitor distinct toolbar settings now working 
+	* Improved file upload support for non image files
+	* South <http://south.aeracode.org/> support
+	* Upgraded to use ``STATIC_URL`` (django.contrib.staticfiles) instead of ``MEDIA_URL``
 
 
 Provides a ``RichTextField`` and ``CKEditorWidget`` utilizing CKEditor with image upload and browsing support included.
